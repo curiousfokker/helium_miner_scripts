@@ -108,7 +108,7 @@ then
 	LOGMOUNT="--mount type=bind,source=$LOGDIR,target=/var/data/log"
 fi
 
-docker run -d --init --env REGION_OVERRIDE="$REGION" --restart always --publish "$GWPORT":"$GWPORT"/udp --publish "$MINERPORT":"$MINERPORT"/tcp --name "$MINER" $LOGMOUNT --mount type=bind,source="$DATADIR",target=/var/data quay.io/team-helium/miner:"$miner_latest"
+docker run -d --init --device /dev/i2c-1 --env REGION_OVERRIDE="$REGION" --restart always --publish "$GWPORT":"$GWPORT"/udp --publish "$MINERPORT":"$MINERPORT"/tcp --name "$MINER" $LOGMOUNT --mount type=bind,source="$DATADIR",target=/var/data quay.io/team-helium/miner:"$miner_latest"
 
 if [ "$GWPORT" -ne 1680 ] || [ "$MINERPORT" -ne 44158 ]; then
    echo "Using nonstandard ports, adjusting miner config"
@@ -116,7 +116,7 @@ if [ "$GWPORT" -ne 1680 ] || [ "$MINERPORT" -ne 44158 ]; then
 fi
 
 echo "Increasing memory limit for snapshots. See https://discord.com/channels/404106811252408320/730245219974381708/851336745538027550"
-docker exec "$MINER" sed -i 's/{key, undefined}$/{key, undefined},{snapshot_memory_limit, 1000}/' /opt/miner/releases/0.1.0/sys.config
+docker exec "$MINER" sed -i 's/{key, undefined}$/{key, {ecc, [{key_slot, 0}, {onboarding_key_slot, 15}]}},{snapshot_memory_limit, 1000}/' /opt/miner/releases/0.1.0/sys.config
 docker restart "$MINER"
 
 update-git
